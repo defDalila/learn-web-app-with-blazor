@@ -10,18 +10,22 @@
         <img src="img/logo.svg" />
     </a>
 
-    <a href="" class="nav-tab">
+    <a href="" class="nav-tab active">
         <img src="img/pizza-slice.svg" />
         <div>Get Pizza</div>
     </a>
 
+    <a href="myorders" class="nav-tab">
+        <img src="img/bike.svg" />
+        <div>My orders</div>
+    </a>
 </div>
 
 <div class="main">
     <div class="checkout-cols">
         <div class="checkout-order-details">
             <h4>Review order</h4>
-            @foreach ( var pizza in Order.Pizzas )
+            @foreach (var pizza in Order.Pizzas)
             {
                 <p>
                     <strong>
@@ -41,7 +45,7 @@
         </div>
     </div>
 
-    <button class="checkout-button btn btn-warning">
+    <button class="checkout-button btn btn-warning" @onclick="PlaceOrder" disabled=@isSubmitting>
         Place order
     </button>
 </div>
@@ -49,7 +53,7 @@
 @code {
     Order Order => OrderState.Order;
 
-    bool isSubmitting;
+    bool isSubmitting = false;
 
     async Task PlaceOrder()
     {
@@ -57,6 +61,6 @@
         var response = await HttpClient.PostAsJsonAsync(NavigationManager.BaseUri + "orders", OrderState.Order);
         var newOrderId = await response.Content.ReadFromJsonAsync<int>();
         OrderState.ResetOrder();
-        NavigationManager.NavigateTo("/");
+        NavigationManager.NavigateTo($"myorders/{newOrderId}");
     }
 }

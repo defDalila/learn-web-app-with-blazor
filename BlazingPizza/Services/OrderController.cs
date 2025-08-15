@@ -18,11 +18,14 @@ public class OrdersController : Controller
     [HttpGet]
     public async Task<ActionResult<List<OrderWithStatus>>> GetOrders()
     {
-        var orders = await _db.Orders
-        .Include(o => o.Pizzas).ThenInclude(p => p.Special)
-        .Include(o => o.Pizzas).ThenInclude(p => p.Toppings).ThenInclude(t => t.Topping)
-        .OrderByDescending(o => o.CreatedTime)
-        .ToListAsync();
+        var orders = await _db
+            .Orders.Include(o => o.Pizzas)
+            .ThenInclude(p => p.Special)
+            .Include(o => o.Pizzas)
+            .ThenInclude(p => p.Toppings)
+            .ThenInclude(t => t.Topping)
+            .OrderByDescending(o => o.CreatedTime)
+            .ToListAsync();
 
         return orders.Select(o => OrderWithStatus.FromOrder(o)).ToList();
     }
@@ -35,7 +38,7 @@ public class OrdersController : Controller
         // Enforce existence of Pizza.SpecialId and Topping.ToppingId
         // in the database - prevent the submitter from making up
         // new specials and toppings
-        foreach ( var pizza in order.Pizzas )
+        foreach (var pizza in order.Pizzas)
         {
             pizza.SpecialId = pizza.Special.Id;
             pizza.Special = null;
@@ -45,5 +48,25 @@ public class OrdersController : Controller
         await _db.SaveChangesAsync();
 
         return order.OrderId;
+    }
+
+    [HttpGet("{orderId}")]
+    public async Task<ActionResult<OrderWithStatus>> GetOrderWithStatus(int orderId)
+    {
+        var order = await _db
+            .Orders.Where(o => o.OrderId == orderId)
+            .Include(o => o.Pizzas)
+            .ThenInclude(p => p.Special)
+            .Include(o => o.Pizzas)
+            .ThenInclude(p => p.Toppings)
+            .ThenInclude(t => t.Topping)
+            .SingleOrDefaultAsync();
+
+        if (order == null)
+        {
+            return NotFound();
+        }
+
+        return OrderWithStatus.FromOrder(order);
     }
 }
